@@ -11,7 +11,31 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T14:41:35.680Z"
+      "lastUpdated": "2026-04-25T14:48:45.864Z"
+    },
+    {
+      "id": "git",
+      "name": "git",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T14:48:45.864Z"
+    },
+    {
+      "id": "procfind",
+      "name": "procfind",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T14:48:45.864Z"
     }
   ]
 }
