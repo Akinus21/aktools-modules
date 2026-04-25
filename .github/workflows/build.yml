@@ -1,75 +1,137 @@
-name: Build
+name: Build and Validate
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
 
-
-
-      - name: Build
-        id: build
-        run: |
-          set -o pipefail
-           2>&1 | tee build.log
-        shell: bash
-
-      - name: Upload artifact
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          name: aktools-modules-build
-          path: |
-            target/release/
-            dist/
-            build/
-          if-no-files-found: ignore
-          retention-days: 30
+          node-version: '20'
 
-      - name: Notify webhook on build completion
-        if: always() && github.ref == 'refs/heads/main'
+      - name: Install dependencies
+        run: npm install -g xml2js
+
+      - name: Validate XML manifests
         run: |
-          if [ -f build.log ]; then
-            if result=$(grep -q "error\|failed\|Error\|Failed" build.log 2>/dev/null); then
-              BUILD_STATUS="failure"
-              ERRORS=$(tail -150 build.log)
-            else
-              BUILD_STATUS="success"
-              ERRORS=""
-            fi
-          else
-            BUILD_STATUS="failure"
-            ERRORS="Build log not found"
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const { XMLParser } = require("xml2js");
+
+            const parser = new XMLParser({ ignoreAttrs: true });
+            let hasErrors = false;
+
+            const entries = fs.readdirSync(".", { withFileTypes: true });
+            for (const entry of entries) {
+              if (entry.isDirectory()) {
+                const manifestPath = path.join(entry.name, "manifest.xml");
+                if (fs.existsSync(manifestPath)) {
+                  try {
+                    const content = fs.readFileSync(manifestPath, "utf8");
+                    parser.parseString(content);
+                    console.log("✓ Valid XML:", manifestPath);
+                  } catch (e) {
+                    console.error("✗ Invalid XML:", manifestPath, e.message);
+                    hasErrors = true;
+                  }
+                }
+              }
+            }
+
+            if (hasErrors) process.exit(1);
+          '
+
+      - name: Validate registry.json
+        run: |
+          if ! fs.existsSync("registry.json"); then
+            echo "registry.json not found"
+            exit 1
           fi
-          if [ "${{ job.status }}" = "success" ]; then
-            BUILD_STATUS="success"
-            ERRORS=""
-          elif [ "${{ job.status }}" = "failure" ]; then
-            BUILD_STATUS="failure"
-            ERRORS=$(cat build.log 2>/dev/null | tail -150 || echo "Build failed")
+          node -e 'JSON.parse(fs.readFileSync("registry.json"))'
+
+      - name: Check module structure
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+
+            const entries = fs.readdirSync(".", { withFileTypes: true });
+            for (const entry of entries) {
+              if (entry.isDirectory()) {
+                const manifestPath = path.join(entry.name, "manifest.xml");
+                if (fs.existsSync(manifestPath)) {
+                  if (!fs.existsSync(path.join(entry.name, "README.md"))) {
+                    console.error("Missing README.md in", entry.name);
+                    process.exit(1);
+                  }
+                }
+              }
+            }
+            console.log("All modules have required files");
+          '
+
+      - name: Regenerate registry.json
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+
+            const modules = [];
+            const entries = fs.readdirSync(".", { withFileTypes: true });
+
+            for (const entry of entries) {
+              if (entry.isDirectory()) {
+                const manifestPath = path.join(entry.name, "manifest.xml");
+                if (fs.existsSync(manifestPath)) {
+                  const content = fs.readFileSync(manifestPath, "utf8");
+                  const regex = /<(\w+)>([^<]*)<\/\1>/g;
+                  const data = {};
+                  let match;
+                  while ((match = regex.exec(content)) !== null) {
+                    data[match[1]] = match[2];
+                  }
+                  modules.push({
+                    id: entry.name,
+                    name: data.name || entry.name,
+                    version: data.version || "1.0.0",
+                    author: data.author || "",
+                    license: data.license || "",
+                    repository: data.repository || "",
+                    description: data.description || "",
+                    tags: data.tags ? data.tags.split(",").map(t => t.trim()) : [],
+                    minAktoolsVersion: data.minAktoolsVersion || "",
+                    lastUpdated: new Date().toISOString()
+                  });
+                }
+              }
+            }
+
+            const registry = { version: 1, modules };
+            fs.writeFileSync("registry.json", JSON.stringify(registry, null, 2));
+            console.log("Updated registry.json with", modules.length, "modules");
+          '
+
+      - name: Commit registry changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-regenerate registry.json"
+          file_pattern: registry.json
+
+      - name: Notify webhook on failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d '{"event":"validation_failed","repo":"${{ github.repository }}","run":"${{ github.run_id }}","url":"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}'
           fi
-          PAYLOAD=$(jq -n \
-            --arg status "$BUILD_STATUS" \
-            --arg errors "$ERRORS" \
-            --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --arg sha "${{ github.sha }}" \
-            '{status: $status, errors: $errors, run_url: $run_url, sha: $sha}')
-          SIG=$(echo -n "$PAYLOAD" | \
-            openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | \
-            awk '{print "sha256="$2}')
-          curl -fsSL -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: build_complete" \
-            -H "X-Hub-Signature-256: $SIG" \
-            -d "$PAYLOAD" \
-            "${{ secrets.WEBHOOK_URL }}" || true
