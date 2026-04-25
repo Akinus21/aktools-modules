@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<module>
+    <name>example-module</name>
+    <alias>example</alias>
+    <executable>./script.sh</executable>
+    <option>
+        <flag>hello</flag>
+        <command>echo "Hello from example module!"</command>
+    </option>
+</module>

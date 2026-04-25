@@ -1,0 +1,63 @@
+name: Regenerate Registry
+
+on:
+  push:
+    paths:
+      - '**/manifest.xml'
+  workflow_dispatch:
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate registry.json
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+
+            const modules = [];
+            const entries = fs.readdirSync(".", { withFileTypes: true });
+
+            for (const entry of entries) {
+              if (entry.isDirectory()) {
+                const manifestPath = path.join(entry.name, "manifest.xml");
+                if (fs.existsSync(manifestPath)) {
+                  const content = fs.readFileSync(manifestPath, "utf8");
+                  const parseXml = (xml) => {
+                    const result = {};
+                    const regex = /<(\w+)>([^<]*)<\/\1>/g;
+                    let match;
+                    while ((match = regex.exec(xml)) !== null) {
+                      result[match[1]] = match[2];
+                    }
+                    return result;
+                  };
+                  const data = parseXml(content);
+                  modules.push({
+                    id: entry.name,
+                    name: data.name || entry.name,
+                    version: data.version || "1.0.0",
+                    author: data.author || "",
+                    license: data.license || "",
+                    repository: data.repository || "",
+                    description: data.description || "",
+                    tags: data.tags ? data.tags.split(",").map(t => t.trim()) : [],
+                    minAktoolsVersion: data.minAktoolsVersion || "",
+                    lastUpdated: new Date().toISOString()
+                  });
+                }
+              }
+            }
+
+            const registry = { version: 1, modules };
+            fs.writeFileSync("registry.json", JSON.stringify(registry, null, 2));
+            console.log("Updated registry.json with", modules.length, "modules");
+          '
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-regenerate registry.json"
+          file_pattern: registry.json
