@@ -1,0 +1,75 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+
+
+      - name: Build
+        id: build
+        run: |
+          set -o pipefail
+           2>&1 | tee build.log
+        shell: bash
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aktools-modules-build
+          path: |
+            target/release/
+            dist/
+            build/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Notify webhook on build completion
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          if [ -f build.log ]; then
+            if result=$(grep -q "error\|failed\|Error\|Failed" build.log 2>/dev/null); then
+              BUILD_STATUS="failure"
+              ERRORS=$(tail -150 build.log)
+            else
+              BUILD_STATUS="success"
+              ERRORS=""
+            fi
+          else
+            BUILD_STATUS="failure"
+            ERRORS="Build log not found"
+          fi
+          if [ "${{ job.status }}" = "success" ]; then
+            BUILD_STATUS="success"
+            ERRORS=""
+          elif [ "${{ job.status }}" = "failure" ]; then
+            BUILD_STATUS="failure"
+            ERRORS=$(cat build.log 2>/dev/null | tail -150 || echo "Build failed")
+          fi
+          PAYLOAD=$(jq -n \
+            --arg status "$BUILD_STATUS" \
+            --arg errors "$ERRORS" \
+            --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg sha "${{ github.sha }}" \
+            '{status: $status, errors: $errors, run_url: $run_url, sha: $sha}')
+          SIG=$(echo -n "$PAYLOAD" | \
+            openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | \
+            awk '{print "sha256="$2}')
+          curl -fsSL -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: build_complete" \
+            -H "X-Hub-Signature-256: $SIG" \
+            -d "$PAYLOAD" \
+            "${{ secrets.WEBHOOK_URL }}" || true
