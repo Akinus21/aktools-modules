@@ -1,4 +1,17 @@
 {
   "version": 1,
-  "modules": []
+  "modules": [
+    {
+      "id": "example-module",
+      "name": "example-module",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T14:41:35.680Z"
+    }
+  ]
 }
