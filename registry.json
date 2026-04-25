@@ -1,13 +1,53 @@
 {
+  "version": 1,
   "modules": [
     {
-      "author": "unknown",
-      "description": "Module submitted via aktools add-mod",
+      "id": "example-module",
+      "name": "example-module",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T20:28:32.368Z"
+    },
+    {
+      "id": "git",
+      "name": "git",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T20:28:32.369Z"
+    },
+    {
+      "id": "procfind",
+      "name": "procfind",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T20:28:32.369Z"
+    },
+    {
       "id": "upgrade",
       "name": "upgrade",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
       "tags": [],
-      "version": "1.0.0"
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T20:28:32.369Z"
     }
-  ],
-  "version": 1
+  ]
 }
