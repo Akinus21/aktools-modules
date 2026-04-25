@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<module>
+    <name>git</name>
+    <alias>git</alias>
+    <executable>./git.sh</executable>
+    <option>
+        <flag></flag>
+        <command></command>
+    </option>
+</module>

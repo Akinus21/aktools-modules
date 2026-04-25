@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<module>
+    <name>procfind</name>
+    <alias>pf</alias>
+    <executable>./procfind.sh</executable>
+    <option>
+        <flag></flag>
+        <command></command>
+    </option>
+</module>
