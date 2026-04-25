@@ -11,7 +11,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T20:28:32.368Z"
+      "lastUpdated": "2026-04-25T20:45:47.878Z"
     },
     {
       "id": "git",
@@ -23,7 +23,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T20:28:32.369Z"
+      "lastUpdated": "2026-04-25T20:45:47.879Z"
     },
     {
       "id": "procfind",
@@ -35,19 +35,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T20:28:32.369Z"
-    },
-    {
-      "id": "upgrade",
-      "name": "upgrade",
-      "version": "1.0.0",
-      "author": "",
-      "license": "",
-      "repository": "",
-      "description": "",
-      "tags": [],
-      "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T20:28:32.369Z"
+      "lastUpdated": "2026-04-25T20:45:47.879Z"
     }
   ]
 }
