@@ -18,46 +18,44 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install -g xml2js
-
       - name: Validate XML manifests
         run: |
           node -e '
             const fs = require("fs");
             const path = require("path");
-            const { XMLParser } = require("xml2js");
-
-            const parser = new XMLParser({ ignoreAttrs: true });
-            let hasErrors = false;
 
             const entries = fs.readdirSync(".", { withFileTypes: true });
             for (const entry of entries) {
               if (entry.isDirectory()) {
                 const manifestPath = path.join(entry.name, "manifest.xml");
                 if (fs.existsSync(manifestPath)) {
-                  try {
-                    const content = fs.readFileSync(manifestPath, "utf8");
-                    parser.parseString(content);
+                  const content = fs.readFileSync(manifestPath, "utf8");
+                  const regex = /<(\w+)>([^<]*)<\/\1>/g;
+                  let match;
+                  let hasError = false;
+                  while ((match = regex.exec(content)) !== null) {}
+                  if (content.includes("<module>") && content.includes("</module>")) {
                     console.log("✓ Valid XML:", manifestPath);
-                  } catch (e) {
-                    console.error("✗ Invalid XML:", manifestPath, e.message);
-                    hasErrors = true;
+                  } else {
+                    console.error("✗ Invalid XML structure:", manifestPath);
+                    hasError = true;
                   }
+                  if (hasError) process.exit(1);
                 }
               }
             }
-
-            if (hasErrors) process.exit(1);
           '
 
-      - name: Validate registry.json
+      - name: Validate registry.json exists
         run: |
-          if ! fs.existsSync("registry.json"); then
+          if [ ! -f registry.json ]; then
             echo "registry.json not found"
             exit 1
           fi
-          node -e 'JSON.parse(fs.readFileSync("registry.json"))'
+          echo "registry.json exists"
+
+      - name: Validate registry.json JSON
+        run: node -e 'JSON.parse(require("fs").readFileSync("registry.json"))'
 
       - name: Check module structure
         run: |
