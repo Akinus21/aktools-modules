@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <module>
     <name>upgrade</name>
+    <alias>akt-upgrade</alias>
     <executable>upgrade.sh</executable>
     <option>
         <flag></flag>
