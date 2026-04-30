@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<module>
+    <name>ssh</name>
+    <alias>{}</alias>
+    <executable></executable>
+    <option>
+        <flag>ssh-1</flag>
+        <command>ssh-1-command</command>
+    </option>
+</module>
