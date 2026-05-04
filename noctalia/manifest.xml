@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<module>
+    <name>noctalia</name>
+    <alias>{}</alias>
+    <executable></executable>
+    <option>
+        <flag>restart</flag>
+        <command>pkill -f noctalia-shell && cd ~ && nohup qs -c noctalia-shell &</command>
+    </option>
+    <option>
+        <flag>start</flag>
+        <command>qs -c noctalia-shell</command>
+    </option>
+    <option>
+        <flag>stop</flag>
+        <command>pkill -f noctalia-shell</command>
+    </option>
+    <option>
+        <flag>logs</flag>
+        <command>journalctl -f | grep -i noctalia</command>
+    </option>
+</module>
