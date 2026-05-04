@@ -1,13 +1,65 @@
 {
+  "version": 1,
   "modules": [
     {
-      "author": "Akinus21",
-      "description": "Module submitted via aktools add-mod",
+      "id": "example-module",
+      "name": "example-module",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T14:41:35.680Z"
+    },
+    {
+      "id": "git",
+      "name": "git",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T15:02:00.000Z"
+    },
+    {
       "id": "noctalia",
       "name": "noctalia",
+      "version": "1.0.0",
+      "author": "Akinus21",
+      "license": "",
+      "repository": "",
+      "description": "Module submitted via aktools add-mod",
       "tags": [],
-      "version": "1.0.0"
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "id": "procfind",
+      "name": "procfind",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-04-25T15:02:00.000Z"
+    },
+    {
+      "id": "ssh",
+      "name": "ssh",
+      "version": "1.0.0",
+      "author": "",
+      "license": "",
+      "repository": "",
+      "description": "",
+      "tags": [],
+      "minAktoolsVersion": "",
+      "lastUpdated": "2026-05-01T00:00:00.000Z"
     }
-  ],
-  "version": 1
+  ]
 }
