@@ -11,7 +11,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T14:41:35.680Z"
+      "lastUpdated": "2026-05-04T03:43:28.340Z"
     },
     {
       "id": "git",
@@ -23,19 +23,19 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T15:02:00.000Z"
+      "lastUpdated": "2026-05-04T03:43:28.340Z"
     },
     {
       "id": "noctalia",
       "name": "noctalia",
       "version": "1.0.0",
-      "author": "Akinus21",
+      "author": "",
       "license": "",
       "repository": "",
-      "description": "Module submitted via aktools add-mod",
+      "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-05-03T00:00:00.000Z"
+      "lastUpdated": "2026-05-04T03:43:28.340Z"
     },
     {
       "id": "procfind",
@@ -47,7 +47,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-04-25T15:02:00.000Z"
+      "lastUpdated": "2026-05-04T03:43:28.340Z"
     },
     {
       "id": "ssh",
@@ -59,7 +59,7 @@
       "description": "",
       "tags": [],
       "minAktoolsVersion": "",
-      "lastUpdated": "2026-05-01T00:00:00.000Z"
+      "lastUpdated": "2026-05-04T03:43:28.340Z"
     }
   ]
 }
