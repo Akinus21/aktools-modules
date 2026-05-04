@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<module>
+    <name>blueak</name>
+    <alias>bak</alias>
+    <executable></executable>
+    <option>
+        <flag>upgrade</flag>
+        <command>sudo bootc upgrade && reboot</command>
+    </option>
+    <option>
+        <flag>logs</flag>
+        <command>cat ~/.local/share/blueak/init.log</command>
+    </option>
+</module>
