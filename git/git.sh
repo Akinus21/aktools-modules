@@ -430,7 +430,7 @@ EOF
 }
 
 cmd_new() {
-    local REMOTE_URL="$1"
+    local REMOTE_URL="${1:-}"
     [[ -z "$REMOTE_URL" ]] && { echo "Usage: aktools git new <remote-url>"; exit 1; }
 
     local REPO_NAME=$(basename -s .git "$REMOTE_URL")
