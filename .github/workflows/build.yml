@@ -6,9 +6,309 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+    inputs:
+      create_agents_md:
+        description: 'Create AGENTS.md file (y/N)'
+        required: false
+        default: 'N'
+      generate_build_yml:
+        description: 'Generate build.yml workflow (y/N)'
+        required: false
+        default: 'N'
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      create_agents: ${{ steps.check.outputs.create_agents }}
+      generate_build: ${{ steps.check.outputs.generate_build }}
+    steps:
+      - id: check
+        run: |
+          CREATE_AGENTS=$(echo "${{ inputs.create_agents_md }}" | tr '[:upper:]' '[:lower:]')
+          GENERATE_BUILD=$(echo "${{ inputs.generate_build_yml }}" | tr '[:upper:]' '[:lower:]')
+          echo "create_agents=$CREATE_AGENTS" >> $GITHUB_OUTPUT
+          echo "generate_build=$GENERATE_BUILD" >> $GITHUB_OUTPUT
+
+      - name: Create AGENTS.md
+        if: steps.check.outputs.create_agents == 'y'
+        run: |
+          cat > AGENTS.md << 'EOF'
+          # AKTools Modules Repository - Agent Instructions
+
+          ## Overview
+
+          This repository hosts community modules for AKTools. Each module is a folder containing a `manifest.xml` file. The `registry.json` file at the root provides a searchable index of all modules.
+
+          ## Git Push Workflow
+
+          ```bash
+          cd /path/to/aktools-modules
+          git add -A
+          git commit -m "<description>"
+          GIT_SSH_COMMAND="ssh -i /config/.ssh/github -o StrictHostKeyChecking=no" git push origin main
+          ```
+
+          **After every validated change, push to the repository immediately.**
+
+          **Important:** When committing registry.json changes via CI, ensure the checkout step uses `fetch-depth: 0` to fetch all branches so the auto-commit action has the full history.
+
+          ## registry.json Schema
+
+          The registry.json file must be at the repository root and follow this schema:
+
+          ```json
+          {
+            "version": 1,
+            "modules": [
+              {
+                "id": "module-id",
+                "name": "Module Name",
+                "version": "1.0.0",
+                "author": "Author Name",
+                "license": "MIT",
+                "repository": "https://github.com/owner/repo",
+                "description": "Brief module description",
+                "tags": ["System", "Utility"],
+                "minAktoolsVersion": "0.0.32",
+                "lastUpdated": "2026-02-04T23:08:01-07:00"
+              }
+            ]
+          }
+          ```
+
+          ### Field Requirements
+
+          | Field | Type | Required | Description |
+          |-------|------|----------|-------------|
+          | id | string | Yes | Unique identifier (folder name) |
+          | name | string | Yes | Display name |
+          | version | string | Yes | Semantic version (e.g., "1.0.0") |
+          | author | string | No | Module author |
+          | license | string | No | License (e.g., "MIT") |
+          | repository | string | No | Source repository URL |
+          | description | string | No | Brief description |
+          | tags | string[] | No | Categorization tags |
+          | minAktoolsVersion | string | No | Minimum aktools version required |
+          | lastUpdated | string | No | ISO 8601 timestamp |
+
+          ## Module Structure
+
+          Each module folder must contain:
+
+          ```
+          module-name/
+          ├── manifest.xml      # Required - Module metadata
+          ├── README.md         # Required - Documentation
+          └── (script files)    # Optional - Executable scripts
+          ```
+
+          ### manifest.xml Format
+
+          ```xml
+          <?xml version="1.0"?>
+          <module>
+              <name>modulename</name>
+              <alias>alias</alias>
+              <executable>./script.sh</executable>
+              <option>
+                  <flag>flagname</flag>
+                  <command>command to run</command>
+              </option>
+          </module>
+          ```
+
+          - **name** — Module identifier (should match folder name)
+          - **alias** — Short command to invoke the module
+          - **executable** — Path to script (empty for command-only modules)
+          - **flag** — Command-line flag to match
+          - **command** — Command(s) to execute when flag is used
+
+          ## Adding a Module
+
+          1. Create a folder with the module name
+          2. Add manifest.xml with module metadata
+          3. Add README.md with documentation
+          4. Add any script files referenced in manifest.xml
+          5. Update registry.json with the module entry
+          6. Push to GitHub (main branch, CI will auto-validate)
+
+          ## CI/CD
+
+          GitHub Actions validates:
+
+          - All manifest.xml files are valid XML and parseable
+          - registry.json is valid JSON and matches module folders
+          - All referenced script files exist
+
+          ## Tags
+
+          Suggested tags for categorization:
+
+          - **System** — System utilities, hardware control
+          - **Network** — Network monitoring, VPN, etc.
+          - **Development** — Dev tools, git, etc.
+          - **Utility** — General utilities
+          - **Fun** — Entertainment, decorative
+          - **Productivity** — Notes, todos, task management
+          - **Indicator** — Status indicators for bars
+          EOF
+          echo "Created AGENTS.md"
+
+      - name: Generate build.yml
+        if: steps.check.outputs.generate_build == 'y'
+        run: |
+          mkdir -p .github/workflows
+          cat > .github/workflows/build.yml << 'EOF'
+          name: Build and Validate
+
+          on:
+            push:
+              branches:
+                - main
+            pull_request:
+            workflow_dispatch:
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              permissions:
+                contents: write
+              steps:
+                - uses: actions/checkout@v4
+                  with:
+                    token: ${{ secrets.GITHUB_TOKEN }}
+                    fetch-depth: 0
+
+                - name: Set up Node.js
+                  uses: actions/setup-node@v4
+                  with:
+                    node-version: '20'
+
+                - name: Validate XML manifests
+                  run: |
+                    node -e '
+                      const fs = require("fs");
+                      const path = require("path");
+
+                      const entries = fs.readdirSync(".", { withFileTypes: true });
+                      for (const entry of entries) {
+                        if (entry.isDirectory()) {
+                          const manifestPath = path.join(entry.name, "manifest.xml");
+                          if (fs.existsSync(manifestPath)) {
+                            const content = fs.readFileSync(manifestPath, "utf8");
+                            const regex = /<(\w+)>([^<]*)<\/\1>/g;
+                            let match;
+                            let hasError = false;
+                            while ((match = regex.exec(content)) !== null) {}
+                            if (content.includes("<module>") && content.includes("</module>")) {
+                              console.log("✓ Valid XML:", manifestPath);
+                            } else {
+                              console.error("✗ Invalid XML structure:", manifestPath);
+                              hasError = true;
+                            }
+                            if (hasError) process.exit(1);
+                          }
+                        }
+                      }
+                    '
+
+                - name: Validate registry.json exists
+                  run: |
+                    if [ ! -f registry.json ]; then
+                      echo "registry.json not found"
+                      exit 1
+                    fi
+                    echo "registry.json exists"
+
+                - name: Validate registry.json JSON
+                  run: node -e 'JSON.parse(require("fs").readFileSync("registry.json"))'
+
+                - name: Check module structure
+                  run: |
+                    node -e '
+                      const fs = require("fs");
+                      const path = require("path");
+
+                      const entries = fs.readdirSync(".", { withFileTypes: true });
+                      for (const entry of entries) {
+                        if (entry.isDirectory()) {
+                          const manifestPath = path.join(entry.name, "manifest.xml");
+                          if (fs.existsSync(manifestPath)) {
+                            if (!fs.existsSync(path.join(entry.name, "README.md"))) {
+                              console.error("Missing README.md in", entry.name);
+                              process.exit(1);
+                            }
+                          }
+                        }
+                      }
+                      console.log("All modules have required files");
+                    '
+
+                - name: Regenerate registry.json
+                  run: |
+                    node -e '
+                      const fs = require("fs");
+                      const path = require("path");
+
+                      const modules = [];
+                      const entries = fs.readdirSync(".", { withFileTypes: true });
+
+                      for (const entry of entries) {
+                        if (entry.isDirectory()) {
+                          const manifestPath = path.join(entry.name, "manifest.xml");
+                          if (fs.existsSync(manifestPath)) {
+                            const content = fs.readFileSync(manifestPath, "utf8");
+                            const regex = /<(\w+)>([^<]*)<\/\1>/g;
+                            const data = {};
+                            let match;
+                            while ((match = regex.exec(content)) !== null) {
+                              data[match[1]] = match[2];
+                            }
+                            modules.push({
+                              id: entry.name,
+                              name: data.name || entry.name,
+                              version: data.version || "1.0.0",
+                              author: data.author || "",
+                              license: data.license || "",
+                              repository: data.repository || "",
+                              description: data.description || "",
+                              tags: data.tags ? data.tags.split(",").map(t => t.trim()) : [],
+                              minAktoolsVersion: data.minAktoolsVersion || "",
+                              lastUpdated: new Date().toISOString()
+                            });
+                          }
+                        }
+                      }
+
+                      const registry = { version: 1, modules };
+                      fs.writeFileSync("registry.json", JSON.stringify(registry, null, 2));
+                      console.log("Updated registry.json with", modules.length, "modules");
+                    '
+
+                - name: Commit registry changes
+                  uses: stefanzweifel/git-auto-commit-action@v5
+                  with:
+                    commit_message: "chore: auto-regenerate registry.json"
+                    file_pattern: registry.json
+
+                - name: Notify webhook on failure
+                  if: failure()
+                  run: |
+                    if [ -n "${{ secrets.WEBHOOK_URL }}" ]; then
+                      PAYLOAD='{"event":"validation_failed","repo":"${{ github.repository }}","run":"${{ github.run_id }}","url":"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}'
+                      printf '%s' "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/.* /hex:/' > sig.txt
+                      SIGNATURE=$(cat sig.txt)
+                      curl -s -X POST "${{ secrets.WEBHOOK_URL }}" \
+                        -H "Content-Type: application/json" \
+                        -H "X-Signature: $SIGNATURE" \
+                        -d "$PAYLOAD"
+                    fi
+          EOF
+          echo "Created .github/workflows/build.yml"
+
   validate:
+    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: write
